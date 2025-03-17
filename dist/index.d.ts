@@ -10,8 +10,6 @@ interface SitemapPluginOptions {
     baseUrl?: string;
     filename?: string;
     outputDir?: string;
-    includeExtensions?: string[];
-    excludeFiles?: string[];
     defaultChangefreq?: SitemapEntry['changefreq'];
     defaultPriority?: number;
     customEntries?: SitemapEntry[];
