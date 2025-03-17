@@ -127,7 +127,9 @@ export default function VikeSitemapPlugin(options: SitemapPluginOptions = {}): P
     pagesDir: 'pages',
     baseUrl: 'http://localhost',
     filename: 'sitemap.xml',
-    outputDir: 'dist/client',
+    outputDir: process.env.NODE_ENV === 'development'
+      ? 'public'  // Default for dev
+      : 'dist/client', // Default for production,
     defaultChangefreq: 'weekly',
     defaultPriority: 0.5,
     customEntries: [],
