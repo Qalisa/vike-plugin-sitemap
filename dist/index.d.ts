@@ -1,7 +1,21 @@
 import { Plugin } from 'vite';
+interface SitemapEntry {
+    loc: string;
+    lastmod?: string;
+    changefreq?: 'always' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'never';
+    priority?: number;
+}
 interface SitemapPluginOptions {
     pagesDir?: string;
     baseUrl?: string;
+    filename?: string;
+    outputDir?: string;
+    includeExtensions?: string[];
+    excludeFiles?: string[];
+    defaultChangefreq?: SitemapEntry['changefreq'];
+    defaultPriority?: number;
+    customEntries?: SitemapEntry[];
+    formatDate?: (date: Date) => string;
 }
-export default function ViteSitemapPlugin({ pagesDir, baseUrl }?: SitemapPluginOptions): Plugin;
+export default function VikeSitemapPlugin(options?: SitemapPluginOptions): Plugin;
 export {};

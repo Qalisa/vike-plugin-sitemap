@@ -1,41 +1,42 @@
 {
-    "name": "vike-sitemap",
-    "version": "1.0.1",
-    "description": "A Vite plugin to generate a sitemap from the pages directory.",
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
-    "type": "module",
-    "exports": {
-      ".": {
-        "import": "./dist/index.js",
-        "require": "./dist/index.js"
-      }
-    },
-    "files": [
-      "dist"
-    ],
-    "scripts": {
-        "build": "tsc",
-        "publish": "npm publish --access public"
-    },
-    "peerDependencies": {
-        "vite": "^6"
-    },
-    "devDependencies": {
-        "@types/node": "^22.13.10",
-        "vite": "^6.2.2",
-        "typescript": "^5.8.2"
-    },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/Qalisa/vite-plugin-sitemap.git"
-    },
-    "keywords": [
-        "vite",
-        "sitemap",
-        "plugin"
-    ],
-    "author": "Qalisa",
-    "license": "MIT",
-    "packageManager": "pnpm@9.15.4+sha512.b2dc20e2fc72b3e18848459b37359a32064663e5627a51e4c74b2c29dd8e8e0491483c3abb40789cfd578bf362fb6ba8261b05f0387d76792ed6e23ea3b1b6a0"
+  "name": "vike-sitemap",
+  "version": "1.0.2",
+  "description": "A Vite plugin to generate a sitemap from the pages directory.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "vite": "^6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "vite": "^6.2.2",
+    "typescript": "^5.8.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Qalisa/vike-sitemap.git"
+  },
+  "keywords": [
+    "vite",
+    "sitemap",
+    "plugin",
+    "vike"
+  ],
+  "author": "Qalisa",
+  "license": "MIT",
+  "packageManager": "pnpm@9.15.4+sha512.b2dc20e2fc72b3e18848459b37359a32064663e5627a51e4c74b2c29dd8e8e0491483c3abb40789cfd578bf362fb6ba8261b05f0387d76792ed6e23ea3b1b6a0"
 }
