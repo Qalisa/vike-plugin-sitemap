@@ -1,0 +1,19 @@
+{
+    "name": "vite-plugin-sitemap",
+    "version": "1.0.0",
+    "description": "A Vite plugin to generate a sitemap from the pages directory.",
+    "main": "index.js",
+    "type": "module",
+    "exports": "./index.js",
+    "scripts": {
+      "build": "echo 'No build step needed'",
+      "publish": "npm publish --access public"
+    },
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/Qalisa/vite-plugin-sitemap.git"
+    },
+    "keywords": ["vite", "sitemap", "plugin"],
+    "author": "Qalisa",
+    "license": "MIT"
+  }
