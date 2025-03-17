@@ -1,0 +1,27 @@
+name: Auto Tag on Package Version Change
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'package.json'
+jobs:
+  create-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get package version
+        id: package-version
+        uses: martinbeentjes/npm-get-version-action@main
+      - name: Create tag
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `refs/tags/v${process.env.PACKAGE_VERSION}`,
+              sha: context.sha
+            })
+        env:
+          PACKAGE_VERSION: ${{ steps.package-version.outputs.current-version }}
