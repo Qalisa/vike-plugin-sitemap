@@ -17,6 +17,6 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v2
       - run: pnpm i # Install dependencies
-      - run: pnpm publish --provenance --access public
+      - run: pnpm publish --provenance --access public --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
