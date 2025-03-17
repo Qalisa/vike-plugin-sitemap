@@ -1,2 +1,2 @@
 # vike-sitemap
-Generate a sitemap, for Vike projects
+Generate a sitemap, for Vike projects.
