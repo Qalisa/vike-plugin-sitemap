@@ -8,6 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write  # Needed for creating tags and releases
+      id-token: write  # Needed for npm provenance
     steps:
       - uses: actions/checkout@v4
         with:
