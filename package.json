@@ -1,6 +1,6 @@
 {
   "name": "vike-sitemap",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "A Vite plugin to generate a sitemap from the pages directory.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
