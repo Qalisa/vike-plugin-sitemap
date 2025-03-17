@@ -25,9 +25,9 @@ ${urls.map(url => `  <url><loc>${url}</loc></url>`).join('\n')}
         console.error('❌ Error generating sitemap:', err);
     }
 }
-export default function ViteSitemapPlugin({ pagesDir = 'src/pages', baseUrl = 'https://example.com' } = {}) {
+export default function ViteSitemapPlugin({ pagesDir = 'src/pages', baseUrl = 'http://localhost' } = {}) {
     return {
-        name: 'vite-plugin-sitemap',
+        name: 'vike-sitemap',
         apply: 'build',
         async buildEnd() {
             await generateSitemap(resolve(__dirname, pagesDir), baseUrl);
