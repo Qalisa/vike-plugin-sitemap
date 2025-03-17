@@ -8,8 +8,7 @@ async function generateSitemap(options) {
     await fs.mkdir(resolvedOutputDir, { recursive: true });
     /**
      * Recursively walk through a directory looking for files ending with "+Page" (any extension)
-     * while ignoring folders starting with "_". The `currentRoute` represents the URL path built
-     * from the directory structure.
+     * while ignoring folders starting with "_" and building the URL route.
      */
     async function getSitemapEntries(dir, currentRoute = '') {
         let entries = [];
@@ -28,13 +27,15 @@ async function generateSitemap(options) {
                 // For example: "index+Page.tsx" or "about+Page.vue"
                 const match = item.name.match(/^(.*)\+Page\.[^.]+$/);
                 if (match) {
-                    // If the filename (without extension and "+Page") is empty, we use the current route
-                    // Otherwise, we append the extracted name to the current route
                     const pageName = match[1];
-                    const routePath = pageName ? (currentRoute ? `${currentRoute}/${pageName}` : pageName) : currentRoute;
+                    let routePath = pageName ? (currentRoute ? `${currentRoute}/${pageName}` : pageName) : currentRoute;
+                    // If the route is exactly "index", treat it as the root (i.e. empty string)
+                    if (routePath === 'index') {
+                        routePath = '';
+                    }
                     // Build the full URL
                     let loc = `${baseUrl}/${routePath}`.replace(/\/+/g, '/');
-                    // Get last modified date from the file's stats
+                    // Get the file's last modified date
                     let lastmod;
                     try {
                         const stat = await fs.stat(join(dir, item.name));
