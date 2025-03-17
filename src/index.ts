@@ -1,11 +1,12 @@
 import { promises as fs } from 'fs';
-import path from 'path';
+import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
+import { Plugin } from 'vite';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = dirname(__filename);
 
-async function generateSitemap(pagesDir, baseUrl) {
+async function generateSitemap(pagesDir: string, baseUrl: string): Promise<void> {
   try {
     const files = await fs.readdir(pagesDir);
     const urls = files
@@ -21,19 +22,24 @@ async function generateSitemap(pagesDir, baseUrl) {
 ${urls.map(url => `  <url><loc>${url}</loc></url>`).join('\n')}
 </urlset>`;
 
-    await fs.writeFile(path.resolve('dist', 'sitemap.xml'), sitemapContent, 'utf8');
+    await fs.writeFile(resolve('dist', 'sitemap.xml'), sitemapContent, 'utf8');
     console.log('✅ Sitemap generated!');
   } catch (err) {
     console.error('❌ Error generating sitemap:', err);
   }
 }
 
-export default function ViteSitemapPlugin({ pagesDir = 'src/pages', baseUrl = 'https://example.com' } = {}) {
+interface SitemapPluginOptions {
+  pagesDir?: string;
+  baseUrl?: string;
+}
+
+export default function ViteSitemapPlugin({ pagesDir = 'src/pages', baseUrl = 'http://localhost' }: SitemapPluginOptions = {}): Plugin {
   return {
-    name: 'vite-plugin-sitemap',
+    name: 'vike-sitemap',
     apply: 'build',
     async buildEnd() {
-      await generateSitemap(path.resolve(__dirname, pagesDir), baseUrl);
+      await generateSitemap(resolve(__dirname, pagesDir), baseUrl);
     }
   };
 }
