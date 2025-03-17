@@ -21,8 +21,10 @@ jobs:
         with:
           registry-url: 'https://registry.npmjs.org'
       - name: Install pnpm
+        if: steps.release.outputs.released == 'true'
         uses: pnpm/action-setup@v2
-      - run: pnpm i
+      - if: steps.release.outputs.released == 'true'
+        run: pnpm i
       - name: Publish
         if: steps.release.outputs.released == 'true'
         run: pnpm publish --provenance --access public
