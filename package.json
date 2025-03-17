@@ -15,7 +15,7 @@
         "publish": "npm publish --access public"
     },
     "peerDependencies": {
-        "vite": "^6.2.2"
+        "vite": "^6"
     },
     "devDependencies": {
         "@types/node": "^22.13.10",
