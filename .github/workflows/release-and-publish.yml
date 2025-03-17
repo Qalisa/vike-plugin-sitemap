@@ -3,11 +3,11 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'package.json'
 jobs:
   create-tag:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Needed for creating tags and releases
     steps:
       - uses: actions/checkout@v4
         with:
