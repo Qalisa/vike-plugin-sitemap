@@ -1,6 +1,6 @@
 {
-  "name": "vike-sitemap",
-  "version": "1.0.11",
+  "name": "vike-plugin-sitemap",
+  "version": "1.0.12",
   "description": "A Vite plugin to generate a sitemap from the pages directory.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -28,7 +28,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Qalisa/vike-sitemap.git"
+    "url": "https://github.com/Qalisa/vike-plugin-sitemap.git"
   },
   "keywords": [
     "vite",

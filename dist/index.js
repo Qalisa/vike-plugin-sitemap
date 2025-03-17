@@ -97,7 +97,7 @@ export default function VikeSitemapPlugin(options = {}) {
     // Merge user options with defaults
     const mergedOptions = { ...defaultOptions, ...options };
     return {
-        name: 'vike-sitemap',
+        name: 'vike-plugin-sitemap',
         apply: 'build',
         async closeBundle() {
             await generateSitemap(mergedOptions);

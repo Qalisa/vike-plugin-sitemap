@@ -129,7 +129,7 @@ export default function VikeSitemapPlugin(options: SitemapPluginOptions = {}): P
   const mergedOptions = { ...defaultOptions, ...options };
 
   return {
-    name: 'vike-sitemap',
+    name: 'vike-plugin-sitemap',
     apply: 'build',
     async closeBundle() {
       await generateSitemap(mergedOptions);
