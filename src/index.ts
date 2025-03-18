@@ -2,6 +2,9 @@ import { promises as fs } from 'fs';
 import { resolve, join } from 'path';
 import { Plugin } from 'vite';
 
+/**
+ * Represents an entry in the sitemap.
+ */
 interface SitemapEntry {
   loc: string;
   lastmod?: string;
@@ -9,13 +12,23 @@ interface SitemapEntry {
   priority?: number;
 }
 
+/**
+ * Options for generating the robots.txt file.
+ */
 interface RobotsOptions {
   userAgent?: string;
   disallow: {
+    /** 
+     * Specific Disallow directive for Cloudflare proxy users. 
+     * @see https://developers.cloudflare.com/fundamentals/reference/cdn-cgi-endpoint/#disallow-using-robotstxt 
+     */
     cloudflare: boolean;
   }
 }
 
+/**
+ * Options for configuring the Vike Sitemap Plugin.
+ */
 interface SitemapPluginOptions {
   pagesDir?: string;
   baseUrl?: string;
@@ -28,6 +41,11 @@ interface SitemapPluginOptions {
   robots?: RobotsOptions;
 }
 
+/**
+ * Generates a sitemap.xml file based on the pages directory and custom entries.
+ *
+ * @param options - The required sitemap plugin options.
+ */
 async function generateSitemap(options: Required<SitemapPluginOptions>): Promise<void> {
   const {
     pagesDir,
@@ -44,7 +62,13 @@ async function generateSitemap(options: Required<SitemapPluginOptions>): Promise
   const resolvedOutputDir = resolve(process.cwd(), outputDir);
   await fs.mkdir(resolvedOutputDir, { recursive: true });
 
-  // Recursively find entries for files ending with "+Page" (ignoring directories starting with '_')
+  /**
+   * Recursively collects sitemap entries from files ending with "+Page".
+   *
+   * @param dir - Directory to scan.
+   * @param currentRoute - Current route path.
+   * @returns An array of sitemap entries.
+   */
   async function getSitemapEntries(dir: string, currentRoute: string = ''): Promise<SitemapEntry[]> {
     let entries: SitemapEntry[] = [];
     const items = await fs.readdir(dir, { withFileTypes: true });
@@ -105,6 +129,11 @@ ${xmlEntries.join('\n')}
   console.log(`✅ Sitemap generated at ${join(outputDir, filename)}!`);
 }
 
+/**
+ * Generates a robots.txt file with a sitemap reference.
+ *
+ * @param options - The required sitemap plugin options.
+ */
 async function generateRobotsTxt(options: Required<SitemapPluginOptions>): Promise<void> {
   const { baseUrl, filename, outputDir, robots } = options;
   const resolvedOutputDir = resolve(process.cwd(), outputDir);
@@ -113,7 +142,7 @@ async function generateRobotsTxt(options: Required<SitemapPluginOptions>): Promi
   // Construct the absolute sitemap URL
   const sitemapUrl = `${baseUrl}/${filename}`.replace(/\/+/g, '/');
   const robotsContent = `User-agent: ${robots.userAgent}
-${robots.disallow.cloudflare && `# https://developers.cloudflare.com/fundamentals/reference/cdn-cgi-endpoint/#disallow-using-robotstxt
+${robots.disallow.cloudflare && `
 Disallow: /cdn-cgi/`}
 Sitemap: ${sitemapUrl}
 `;
@@ -122,6 +151,12 @@ Sitemap: ${sitemapUrl}
   console.log(`✅ robots.txt generated at ${join(outputDir, 'robots.txt')}!`);
 }
 
+/**
+ * Vike plugin for generating sitemap.xml and robots.txt.
+ *
+ * @param options - Optional sitemap plugin options.
+ * @returns A Vite plugin instance.
+ */
 export default function VikeSitemapPlugin(options: SitemapPluginOptions = {}): Plugin {
   const defaultOptions: Required<SitemapPluginOptions> = {
     pagesDir: 'pages',
