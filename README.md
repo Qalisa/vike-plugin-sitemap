@@ -1,6 +1,6 @@
 # Vike Sitemap Plugin
 
-A Vike plugin for generating a `sitemap.xml` and `robots.txt` file automatically based on your project structure.
+A Vike plugin for generating a `sitemap.xml` and `robots.txt` file automatically based on your project structure. Early alternative to the soon-to-exist https://github.com/brillout/vike-sitemap.
 
 ## Features
 - Automatically generates a `sitemap.xml` based on your `pages/` directory.
@@ -57,7 +57,7 @@ export default {
 
 ## Development Mode
 
-In development mode, the sitemap and robots.txt are updated automatically when files change.
+In development mode, the sitemap and robots.txt are not yet updated automatically when files change (see [#1](https://github.com/Qalisa/vike-plugin-sitemap/issues/1)). Help would be much appreciated.
 
 ## License
 
