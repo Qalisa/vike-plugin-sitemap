@@ -1,41 +1,41 @@
 import { promises as fs } from 'fs';
 import { resolve, join } from 'path';
+/**
+ * Generates a sitemap.xml file based on the pages directory and custom entries.
+ *
+ * @param options - The required sitemap plugin options.
+ */
 async function generateSitemap(options) {
     const { pagesDir, baseUrl, filename, outputDir, defaultChangefreq, defaultPriority, customEntries, formatDate } = options;
-    // Resolve directories relative to the process's current working directory
     const resolvedPagesDir = resolve(process.cwd(), pagesDir);
     const resolvedOutputDir = resolve(process.cwd(), outputDir);
     await fs.mkdir(resolvedOutputDir, { recursive: true });
     /**
-     * Recursively walk through a directory looking for files ending with "+Page" (any extension)
-     * while ignoring folders starting with "_" and building the URL route.
+     * Recursively collects sitemap entries from files ending with "+Page".
+     *
+     * @param dir - Directory to scan.
+     * @param currentRoute - Current route path.
+     * @returns An array of sitemap entries.
      */
     async function getSitemapEntries(dir, currentRoute = '') {
         let entries = [];
         const items = await fs.readdir(dir, { withFileTypes: true });
         for (const item of items) {
             if (item.isDirectory()) {
-                // Skip directories starting with '_'
                 if (item.name.startsWith('_'))
                     continue;
-                // Append the directory name to the current route and scan recursively
                 const newRoute = currentRoute ? `${currentRoute}/${item.name}` : item.name;
                 entries = entries.concat(await getSitemapEntries(join(dir, item.name), newRoute));
             }
             else if (item.isFile()) {
-                // Check if the file name contains a '+Page' suffix (case-sensitive) before the extension
-                // For example: "index+Page.tsx" or "about+Page.vue"
                 const match = item.name.match(/^(.*)\+Page\.[^.]+$/);
                 if (match) {
                     const pageName = match[1];
                     let routePath = pageName ? (currentRoute ? `${currentRoute}/${pageName}` : pageName) : currentRoute;
-                    // If the route is exactly "index", treat it as the root (i.e. empty string)
                     if (routePath === 'index') {
                         routePath = '';
                     }
-                    // Build the full URL
                     let loc = `${baseUrl}/${routePath}`.replace(/\/+/g, '/');
-                    // Get the file's last modified date
                     let lastmod;
                     try {
                         const stat = await fs.stat(join(dir, item.name));
@@ -57,11 +57,8 @@ async function generateSitemap(options) {
         }
         return entries;
     }
-    // Gather entries from the pages directory recursively
     const entries = await getSitemapEntries(resolvedPagesDir);
-    // Include any custom entries provided via options
     entries.push(...customEntries);
-    // Generate the XML content for the sitemap
     const xmlEntries = entries.map(entry => {
         let xml = '  <url>\n';
         xml += `    <loc>${entry.loc}</loc>\n`;
@@ -78,29 +75,78 @@ async function generateSitemap(options) {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${xmlEntries.join('\n')}
 </urlset>`;
-    // Write the sitemap to the designated file
     await fs.writeFile(join(resolvedOutputDir, filename), sitemapContent, 'utf8');
     console.log(`✅ Sitemap generated at ${join(outputDir, filename)}!`);
 }
+/**
+ * Generates a robots.txt file with a sitemap reference.
+ *
+ * @param options - The required sitemap plugin options.
+ */
+async function generateRobotsTxt(options) {
+    const { baseUrl, filename, outputDir, robots } = options;
+    const resolvedOutputDir = resolve(process.cwd(), outputDir);
+    await fs.mkdir(resolvedOutputDir, { recursive: true });
+    // Construct the absolute sitemap URL
+    const sitemapUrl = `${baseUrl}/${filename}`.replace(/\/+/g, '/');
+    const robotsContent = `User-agent: ${robots.userAgent}
+${robots.disallow.cloudflare && `
+Disallow: /cdn-cgi/`}
+Sitemap: ${sitemapUrl}
+`;
+    await fs.writeFile(join(resolvedOutputDir, 'robots.txt'), robotsContent.trim(), 'utf8');
+    console.log(`✅ robots.txt generated at ${join(outputDir, 'robots.txt')}!`);
+}
+/**
+ * Vike plugin for generating sitemap.xml and robots.txt.
+ *
+ * @param options - Optional sitemap plugin options.
+ * @returns A Vite plugin instance.
+ */
 export default function VikeSitemapPlugin(options = {}) {
-    // Define default options
     const defaultOptions = {
         pagesDir: 'pages',
         baseUrl: 'http://localhost',
         filename: 'sitemap.xml',
-        outputDir: 'dist/client',
+        outputDir: process.env.NODE_ENV === 'development'
+            ? 'public' // Default for dev
+            : 'dist/client', // Default for production,
         defaultChangefreq: 'weekly',
         defaultPriority: 0.5,
         customEntries: [],
-        formatDate: (date) => date.toISOString()
+        formatDate: (date) => date.toISOString(),
+        robots: {
+            userAgent: '*',
+            disallow: {
+                cloudflare: true,
+            }
+        }
     };
-    // Merge user options with defaults
-    const mergedOptions = { ...defaultOptions, ...options };
+    // Merge robots options separately to allow user overrides
+    const mergedOptions = {
+        ...defaultOptions,
+        ...options,
+        robots: { ...defaultOptions.robots, ...options.robots }
+    };
     return {
         name: 'vike-plugin-sitemap',
         apply: 'build',
+        // Build mode: generate both sitemap and robots.txt at the end of the bundle
         async closeBundle() {
             await generateSitemap(mergedOptions);
+            await generateRobotsTxt(mergedOptions);
+        },
+        // Dev mode: generate files when the server starts and on file changes
+        configureServer(server) {
+            const generateAndNotify = async () => {
+                await generateSitemap(mergedOptions);
+                await generateRobotsTxt(mergedOptions);
+                console.log('✅ Sitemap and robots.txt updated in dev mode');
+            };
+            server.watcher.on('add', generateAndNotify);
+            server.watcher.on('unlink', generateAndNotify);
+            server.watcher.on('change', generateAndNotify);
+            generateAndNotify();
         }
     };
 }
