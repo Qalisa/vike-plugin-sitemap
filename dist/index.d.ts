@@ -21,9 +21,6 @@ interface RobotsOptions {
         cloudflare: boolean;
     };
 }
-/**
- * Options for configuring the Vike Sitemap Plugin.
- */
 interface SitemapPluginOptions {
     pagesDir?: string;
     baseUrl: string;
@@ -34,13 +31,10 @@ interface SitemapPluginOptions {
     customEntries?: SitemapEntry[];
     formatDate?: (date: Date) => string;
     robots?: RobotsOptions;
-    debug: {
-        printRoutes: boolean;
-        printIgnored: boolean;
+    debug?: {
+        printRoutes?: boolean;
+        printIgnored?: boolean;
     };
 }
-/**
- * Vike plugin for generating sitemap.xml and robots.txt.
- */
 export default function VikeSitemapPlugin(options: SitemapPluginOptions): Plugin;
 export {};

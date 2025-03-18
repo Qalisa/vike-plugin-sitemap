@@ -26,9 +26,6 @@ interface RobotsOptions {
   }
 }
 
-/**
- * Options for configuring the Vike Sitemap Plugin.
- */
 interface SitemapPluginOptions {
   pagesDir?: string;
   baseUrl: string;
@@ -39,15 +36,13 @@ interface SitemapPluginOptions {
   customEntries?: SitemapEntry[];
   formatDate?: (date: Date) => string;
   robots?: RobotsOptions;
-  debug: {
-    printRoutes: boolean
-    printIgnored: boolean
+  debug?: {
+    printRoutes?: boolean;
+    printIgnored?: boolean;
   }
 }
 
-/**
- * Generates a sitemap.xml file based on the pages directory and custom entries.
- */
+// Generate sitemap.xml
 async function generateSitemap(options: Required<SitemapPluginOptions>): Promise<void> {
   const {
     pagesDir,
@@ -57,17 +52,20 @@ async function generateSitemap(options: Required<SitemapPluginOptions>): Promise
     defaultChangefreq,
     defaultPriority,
     customEntries,
-    formatDate
+    formatDate,
+    debug
   } = options;
 
   const resolvedPagesDir = resolve(process.cwd(), pagesDir);
   const resolvedOutputDir = resolve(process.cwd(), outputDir);
   await fs.mkdir(resolvedOutputDir, { recursive: true });
 
-  /**
-   * Recursively collects sitemap entries from files ending with "+Page".
-   */
-  async function getSitemapEntries(dir: string, currentRouteSegments: string[] = [], ignorePath: boolean = false): Promise<SitemapEntry[]> {
+  // Recursive function to collect sitemap entries
+  async function getSitemapEntries(
+    dir: string,
+    currentRouteSegments: string[] = [],
+    ignorePath: boolean = false
+  ): Promise<SitemapEntry[]> {
     let entries: SitemapEntry[] = [];
     const items = await fs.readdir(dir, { withFileTypes: true });
 
@@ -76,38 +74,34 @@ async function generateSitemap(options: Required<SitemapPluginOptions>): Promise
         // Skip directories starting with '_'
         if (item.name.startsWith('_')) continue;
 
-        // Check if the directory starts with '@'
+        // If directory starts with '@', ignore the path
         const isIgnoredDir = item.name.startsWith('@');
         const newIgnorePath = ignorePath || isIgnoredDir;
 
-        // Only add directory to route segments if it doesn't start with '@' and doesn't match (.*)
+        // Build new route segments
         let newRouteSegments = currentRouteSegments;
         if (!isIgnoredDir && !/^\(.*\)$/.test(item.name)) {
           newRouteSegments = [...currentRouteSegments, item.name];
-        } else if (options.debug.printIgnored) {
-          console.log(`💤 Sitemap: Ignored ${join(dir, item.name)}`)
+        } else if (debug.printIgnored) {
+          console.log(`💤 Sitemap: Ignored directory ${join(dir, item.name)}`);
         }
 
-        // Recurse into the directory
+        // Recurse into directory
         entries = entries.concat(await getSitemapEntries(join(dir, item.name), newRouteSegments, newIgnorePath));
       } else if (item.isFile()) {
-        const match = item.name.match(/^(.*)\+Page\.[^.]+$/);
-        if (match) {
-          const pageName = match[1];
-
-          // Skip if path is ignored or pageName starts with '@'
-          if (ignorePath || (pageName && pageName.startsWith('@'))) {
+        // Only files named exactly +Page.<extension> are pages
+        if (item.name.match(/^\+Page\.[^.]+$/)) {
+          if (ignorePath) {
             console.warn(`⚠️  Sitemap: Cannot generate SSG path yet for: ${join(dir, item.name)}`);
             continue;
           }
 
-          // Construct route path from segments
-          const routeSegments = pageName ? [...currentRouteSegments, pageName] : currentRouteSegments;
-          let routePath = routeSegments.join('/');
+          // Build route path from directory segments
+          let routePath = currentRouteSegments.join('/');
           if (routePath === 'index') {
-            routePath = '';
+            routePath = ''; // Root page
           }
-          let loc = `${baseUrl}/${routePath}`.replace(/\/+/g, '/');
+          const loc = `${baseUrl}/${routePath}`.replace(/\/+/g, '/');
 
           // Get last modified date
           let lastmod: string | undefined;
@@ -133,10 +127,11 @@ async function generateSitemap(options: Required<SitemapPluginOptions>): Promise
   const entries = await getSitemapEntries(resolvedPagesDir);
   entries.push(...customEntries);
 
-  if (options.debug.printRoutes) {
-    entries.forEach((e) => console.log(`✅ Sitemap: route "${e.loc}"`))
+  if (debug.printRoutes) {
+    entries.forEach((e) => console.log(`✅ Sitemap: route "${e.loc}"`));
   }
 
+  // Generate XML
   const xmlEntries = entries.map(entry => {
     let xml = '  <url>\n';
     xml += `    <loc>${entry.loc}</loc>\n`;
@@ -156,9 +151,7 @@ ${xmlEntries.join('\n')}
   console.log(`✅ Sitemap generated at ${join(outputDir, filename)}!`);
 }
 
-/**
- * Generates a robots.txt file with a sitemap reference.
- */
+// Generate robots.txt
 async function generateRobotsTxt(options: Required<SitemapPluginOptions>): Promise<void> {
   const { baseUrl, filename, outputDir, robots } = options;
   const resolvedOutputDir = resolve(process.cwd(), outputDir);
@@ -173,9 +166,7 @@ Sitemap: ${sitemapUrl}`;
   console.log(`✅ robots.txt generated at ${join(outputDir, 'robots.txt')}!`);
 }
 
-/**
- * Vike plugin for generating sitemap.xml and robots.txt.
- */
+// Vite Plugin
 export default function VikeSitemapPlugin(options: SitemapPluginOptions): Plugin {
   const defaultOptions: Required<SitemapPluginOptions> = {
     pagesDir: 'pages',
@@ -198,10 +189,11 @@ export default function VikeSitemapPlugin(options: SitemapPluginOptions): Plugin
     }
   };
 
-  const mergedOptions = { 
-    ...defaultOptions, 
-    ...options, 
-    robots: { ...defaultOptions.robots, ...options.robots }
+  const mergedOptions: Required<SitemapPluginOptions> = {
+    ...defaultOptions,
+    ...options,
+    robots: { ...defaultOptions.robots, ...options.robots },
+    debug: { ...defaultOptions.debug, ...options.debug }
   };
 
   return {
