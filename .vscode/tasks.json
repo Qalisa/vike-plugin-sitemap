@@ -8,7 +8,17 @@
 			"args": ["build"],
 			"options": {
 			  "cwd": "${workspaceFolder}/test-app"
+			},
+			"dependsOn": "Build"
+		},
+		{
+			"label": "Build",
+			"type": "shell",
+			"command": "pnpm",
+			"args": ["build"],
+			"options": {
+			  "cwd": "${workspaceFolder}"
 			}
-		  },
+		},
 	]
 }

@@ -26,7 +26,7 @@ interface RobotsOptions {
  */
 interface SitemapPluginOptions {
     pagesDir?: string;
-    baseUrl?: string;
+    baseUrl: string;
     filename?: string;
     outputDir?: string;
     defaultChangefreq?: SitemapEntry['changefreq'];
@@ -34,12 +34,13 @@ interface SitemapPluginOptions {
     customEntries?: SitemapEntry[];
     formatDate?: (date: Date) => string;
     robots?: RobotsOptions;
+    debug: {
+        printRoutes: boolean;
+        printIgnored: boolean;
+    };
 }
 /**
  * Vike plugin for generating sitemap.xml and robots.txt.
- *
- * @param options - Optional sitemap plugin options.
- * @returns A Vite plugin instance.
  */
-export default function VikeSitemapPlugin(options?: SitemapPluginOptions): Plugin;
+export default function VikeSitemapPlugin(options: SitemapPluginOptions): Plugin;
 export {};
