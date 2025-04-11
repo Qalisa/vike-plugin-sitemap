@@ -12,19 +12,19 @@ A Vike plugin for generating a `sitemap.xml` and `robots.txt` file automatically
 ## Installation
 
 ```sh
-npm install -D vike-plugin-sitemap
+npm install -D @qalisa/vike-plugin-sitemap
 ```
 
 or
 
 ```sh
-yarn add --dev vike-plugin-sitemap
+yarn add --dev @qalisa/vike-plugin-sitemap
 ```
 
 or
 
 ```sh
-pnpm install -D vike-plugin-sitemap
+pnpm install -D @qalisa/vike-plugin-sitemap
 ```
 
 ## Usage
@@ -33,11 +33,11 @@ Add the plugin to your Vike configuration:
 
 ```ts
 // vike.config.ts
-import sitemap from 'vike-plugin-sitemap';
+import sitemap from '@qalisa/vike-plugin-sitemap';
 
 export default {
   plugins: [sitemap({
-    baseUrl: 'https://yourwebsite.com'
+    baseUrl: 'https://yourwebsite.com' // can be omited in dev
   })]
 };
 ```
@@ -47,7 +47,7 @@ export default {
 | Option              | Type      | Default           | Description |
 |---------------------|----------|-------------------|-------------|
 | `pagesDir`         | `string`  | `'pages'`         | Directory containing your Vike pages. |
-| `baseUrl`          | `string`  | `'http://localhost'` | Base URL of your website. |
+| `baseUrl`          | `string`  | `'http://localhost:3000'` | Base URL of your website. |
 | `filename`         | `string`  | `'sitemap.xml'`   | Name of the sitemap file. |
 | `outputDir`        | `string`  | `'public'` (dev), `'dist/client'` (prod) | Output directory for the sitemap and robots.txt. |
 | `defaultChangefreq`| `string`  | `'weekly'`        | Default change frequency for pages. |

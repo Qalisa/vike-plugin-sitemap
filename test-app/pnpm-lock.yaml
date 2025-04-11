@@ -24,6 +24,9 @@ importers:
         specifier: ^0.6.1
         version: 0.6.1(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(vike@0.4.228(react-streaming@0.4.2(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(vite@6.2.6(@types/node@22.14.0)))
     devDependencies:
+      '@qalisa/vike-plugin-sitemap':
+        specifier: ../
+        version: link:..
       '@types/react':
         specifier: ^19.0.10
         version: 19.0.11
@@ -33,9 +36,6 @@ importers:
       typescript:
         specifier: ^5.8.2
         version: 5.8.2
-      vike-plugin-sitemap:
-        specifier: ../
-        version: link:..
       vite:
         specifier: ^6.2.6
         version: 6.2.6(@types/node@22.14.0)

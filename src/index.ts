@@ -49,7 +49,7 @@ export default function VikeSitemapPlugin(options: SitemapPluginOptions): Plugin
   };
 
   return {
-    name: 'vike-plugin-sitemap',
+    name: '@qalisa/vike-plugin-sitemap',
     async configureServer(server: ViteDevServer) {
       // Initialize content when server starts
       await updateContent();
