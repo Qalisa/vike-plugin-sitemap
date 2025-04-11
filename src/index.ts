@@ -200,6 +200,10 @@ export default function VikeSitemapPlugin(options: SitemapPluginOptions): Plugin
     name: 'vike-plugin-sitemap',
     apply: 'build',
     async closeBundle(c) {
+      if(this.environment.config.consumer != "client") {
+        return;
+      }
+
       await generateSitemap(mergedOptions);
       await generateRobotsTxt(mergedOptions);
     },
