@@ -10,7 +10,7 @@ const getDefaultOptions = () : Required<SitemapPluginOptions> => ({
   pagesDir: 'pages',
   baseUrl: defaultBaseUrl,
   filename: 'sitemap.xml',
-  outputDir: process.env.NODE_ENV === 'development' ? 'public' : 'dist/client',
+  outputDir: '.',
   defaultChangefreq: 'weekly',
   defaultPriority: 0.5,
   customEntries: [],
@@ -84,8 +84,8 @@ export default function VikeSitemapPlugin(options: SitemapPluginOptions): Plugin
         }
 
         //
-        await writeSitemapToDisk(mergedOptions);
-        await writeRobotsTxtToDisk(mergedOptions);
+        await writeSitemapToDisk(mergedOptions, this.environment.config.build.outDir);
+        await writeRobotsTxtToDisk(mergedOptions, this.environment.config.build.outDir);
       }
     },
   };

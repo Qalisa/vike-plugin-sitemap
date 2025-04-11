@@ -104,12 +104,15 @@ ${xmlEntries.join('\n')}
 }
 
 // Write sitemap to disk (for production)
-export async function writeSitemapToDisk(options: Required<SitemapPluginOptions>): Promise<void> {
+export async function writeSitemapToDisk(options: Required<SitemapPluginOptions>, viteOutdir: string): Promise<void> {
 const { filename, outputDir } = options;
-const resolvedOutputDir = resolve(process.cwd(), outputDir);
+const resolvedOutputDir = resolve(process.cwd(), viteOutdir, outputDir);
 await fs.mkdir(resolvedOutputDir, { recursive: true });
 
 const sitemapContent = await generateSitemapContent(options);
-await fs.writeFile(join(resolvedOutputDir, filename), sitemapContent, 'utf8');
-console.log(`✅ Sitemap generated at ${join(outputDir, filename)}!`);
+
+//
+const writeTo = join(resolvedOutputDir, filename);
+await fs.writeFile(writeTo, sitemapContent, 'utf8');
+console.log(`✅ Sitemap generated at "${writeTo}" !`);
 }

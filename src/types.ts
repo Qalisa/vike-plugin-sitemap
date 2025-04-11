@@ -93,9 +93,9 @@ export type SitemapEntry = {
   
     /**
      * The directory where `sitemap.xml` and `robots.txt` are written in production builds.
-     * Relative to the project root.
+     * Relative to your `vite.config.js`'s `build.outDir`.
      * @type {string | undefined}
-     * @default 'public' in development, 'dist/client' in production
+     * @default '.' // (root of generated `build.outDir` - `<outDir>/client` for SSR)
      */
     outputDir?: string;
   

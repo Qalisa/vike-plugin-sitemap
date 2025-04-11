@@ -20,12 +20,13 @@ Sitemap: ${sitemapUrl}`;
 export const robotsFileName = 'robots.txt';
 
 // Write robots.txt to disk (for production)
-export async function writeRobotsTxtToDisk(options: Required<SitemapPluginOptions>): Promise<void> {
+export async function writeRobotsTxtToDisk(options: Required<SitemapPluginOptions>, viteOutdir: string): Promise<void> {
 const { outputDir } = options;
-const resolvedOutputDir = resolve(process.cwd(), outputDir);
+const resolvedOutputDir = resolve(process.cwd(), viteOutdir, outputDir);
 await fs.mkdir(resolvedOutputDir, { recursive: true });
 
 const robotsContent = generateRobotsTxtContent(options);
-await fs.writeFile(join(resolvedOutputDir, robotsFileName), robotsContent, 'utf8');
-console.log(`✅ ${robotsFileName} generated at ${join(outputDir, robotsFileName)}!`);
+const writeTo = join(resolvedOutputDir, robotsFileName);
+await fs.writeFile(writeTo, robotsContent, 'utf8');
+console.log(`✅ ${robotsFileName} generated at "${writeTo}" !`);
 }
