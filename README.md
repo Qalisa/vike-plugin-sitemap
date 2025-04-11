@@ -49,7 +49,7 @@ export default {
 | `pagesDir`         | `string`  | `'pages'`         | Directory containing your Vike pages. |
 | `baseUrl`          | `string`  | `'http://localhost:3000'` | Base URL of your website. |
 | `filename`         | `string`  | `'sitemap.xml'`   | Name of the sitemap file. |
-| `outputDir`        | `string`  | ``'.'`            | Output directory for the sitemap and robots.txt, relative to your output bundle client files. |
+| `outputDir`        | `string`  | `'.'`            | Output directory for the sitemap and robots.txt, relative to your output bundle client files. |
 | `defaultChangefreq`| `string`  | `'weekly'`        | Default change frequency for pages. |
 | `defaultPriority`  | `number`  | `0.5`             | Default priority for pages. |
 | `customEntries`    | `SitemapEntry[]` | `[]` | Additional custom sitemap entries. |
