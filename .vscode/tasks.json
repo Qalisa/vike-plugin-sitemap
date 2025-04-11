@@ -2,20 +2,10 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"label": "Build test project with sitemap",
+			"label": "⚙️ Build",
 			"type": "shell",
 			"command": "pnpm",
-			"args": ["build"],
-			"options": {
-			  "cwd": "${workspaceFolder}/test-app"
-			},
-			"dependsOn": "Build"
-		},
-		{
-			"label": "Build",
-			"type": "shell",
-			"command": "pnpm",
-			"args": ["build"],
+			"args": ["build:dev"],
 			"options": {
 			  "cwd": "${workspaceFolder}"
 			}

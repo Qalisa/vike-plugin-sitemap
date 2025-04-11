@@ -1,0 +1,12 @@
+{
+    "configurations": [
+        {
+            "name": "⚙️🚧 Build test project - w/ plugin",
+            "request": "launch",
+            "command": "pnpm build",
+            "type": "node-terminal",
+            "cwd": "${workspaceFolder}/test-app",
+            "preLaunchTask": "⚙️ Build"
+        }
+    ]
+}

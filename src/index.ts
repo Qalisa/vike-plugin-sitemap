@@ -199,7 +199,7 @@ export default function VikeSitemapPlugin(options: SitemapPluginOptions): Plugin
   return {
     name: 'vike-plugin-sitemap',
     apply: 'build',
-    async closeBundle() {
+    async closeBundle(c) {
       await generateSitemap(mergedOptions);
       await generateRobotsTxt(mergedOptions);
     },

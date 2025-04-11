@@ -1,4 +1,4 @@
-name: Auto Tag on Package Version Change
+name: Release and Publish
 on:
   push:
     branches:
