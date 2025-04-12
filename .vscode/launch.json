@@ -1,25 +1,17 @@
 {
     "configurations": [
         {
-            "name": "⚙️🚧 Build test project - w/ plugin",
-            "request": "launch",
-            "command": "pnpm build",
-            "type": "node-terminal",
-            "cwd": "${workspaceFolder}/test-app",
-            "preLaunchTask": "⚙️ Build"
-        },
-        {
             "name": "⚡ Run dev Server on test project - w/ plugin",
             "request": "launch",
             "command": "pnpm dev",
             "type": "node-terminal",
             "cwd": "${workspaceFolder}/test-app",
-            "preLaunchTask": "⚙️ Build",
-            "serverReadyAction":{
+            "preLaunchTask": "⚙️🚧 Build test project - w/ plugin",
+            "serverReadyAction": {
                 "action": "debugWithChrome",
                 "pattern": "Local:   http://localhost:([0-9]+)/",
                 "uriFormat": "http://localhost:%s",
-                "killOnServerStop": false
+                "killOnServerStop": true
             }
         }
     ]
