@@ -21,6 +21,7 @@ const getDefaultOptions = () : Required<SitemapPluginOptions> => ({
       cloudflare: true,
     },
   },
+  clashingPathsResolution: 'ignore',
   debug: {
     printRoutes: false,
     printIgnored: false,
@@ -80,7 +81,7 @@ export default function VikeSitemapPlugin(options: SitemapPluginOptions): Plugin
       if (this.environment.config.consumer === 'client') {
         //
         if(process.env.NODE_ENV == "production" && defaultBaseUrl == mergedOptions.baseUrl) {
-          console.warn(`⚠️ vike-sitemap-plugin - "baseUrl" must be defined in production; will default to ${defaultBaseUrl}.`);
+          console.warn(`⚠️  Sitemap - "baseUrl" must be defined in production; will default to ${defaultBaseUrl}.`);
         }
 
         //

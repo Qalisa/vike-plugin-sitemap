@@ -19,11 +19,6 @@
 				"cwd": "${workspaceFolder}/test-app"
 			},
 			"dependsOn": ["⚙️ Build Plugin"],
-			"presentation": {
-				"reveal": "always",
-				"panel": "new",
-				"close": true
-			},
 			"problemMatcher": []
 		}
 	]

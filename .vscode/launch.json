@@ -6,7 +6,7 @@
             "command": "pnpm dev",
             "type": "node-terminal",
             "cwd": "${workspaceFolder}/test-app",
-            "preLaunchTask": "⚙️🚧 Build test project - w/ plugin",
+            "preLaunchTask": "⚙️ Build Plugin",
             "serverReadyAction": {
                 "action": "debugWithChrome",
                 "pattern": "Local:   http://localhost:([0-9]+)/",

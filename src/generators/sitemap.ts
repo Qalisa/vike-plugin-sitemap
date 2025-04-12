@@ -1,70 +1,75 @@
-import { promises as fs } from 'fs';
+import { Dirent, promises as fs } from 'fs';
 import { resolve, join } from 'path';
-import { SitemapPluginOptions, SitemapEntry } from "../types.js";
-
-/**
- * Helper functions to handle paths and route segments
- */
-const PathUtils = {
-  /**
-   * Normalizes a URL by replacing multiple consecutive slashes with a single one
-   */
-  normalizeUrl(baseUrl: string, path: string): string {
-    return `${baseUrl}/${path}`.replace(/\/+/g, '/');
-  },
-
-  /**
-   * Extracts the relative path from a full file path, useful for error messages
-   */
-  extractRelativePath(fullPath: string): string {
-    return fullPath.split('pages/')[1] || fullPath;
-  },
-
-  /**
-   * Fixes domain-driven routes by removing 'pages' segments from the path
-   */
-  fixDomainDrivenPath(path: string): string {
-    return path.replace(/\/pages\//g, '/');
-  },
-
-  /**
-   * Checks if a directory name is a special directory that should be ignored in paths
-   */
-  isSpecialDirectory(name: string): boolean {
-    return name === 'index' || /^\(.*\)$/.test(name);
-  },
-  
-  /**
-   * Checks if a directory should be skipped entirely
-   */
-  shouldSkipDirectory(name: string): boolean {
-    return name.startsWith('_');
-  },
-  
-  /**
-   * Checks if a directory should mark its route as ignored
-   */
-  shouldIgnoreRoute(name: string): boolean {
-    return name.startsWith('@');
-  }
-};
+import { SitemapPluginOptions, SitemapEntry, ResolvedPage, ResolvedPageApprouved, ClashingPathsResolutionType } from "../types.js";
 
 /**
  * Helper functions to handle duplicate detection and reporting
  */
 const DuplicateHandler = {
   /**
-   * Reports a duplicate URL detection
+   * Group an array into subarrays based on a key.
+   * Returns an array of arrays (not a Record).
    */
-  reportDuplicate(loc: string, currentPath: string, existingPath: string): void {
-    console.warn(`⚠️ Sitemap: Duplicate URL "${loc}" - routes definition clash found -> ${currentPath} == ${existingPath}`);
+  groupBy<T, K extends string | number>(
+    array: T[],
+    keyGetter: (item: T) => K
+  ): T[][] {
+    const groups: Record<K, T[]> = array.reduce((result, item) => {
+      const key = keyGetter(item);
+      if (!result[key]) {
+        result[key] = [];
+      }
+      result[key].push(item);
+      return result;
+    }, {} as Record<K, T[]>);
+
+    return Object.values(groups);
+  },
+  /**
+   * Resolve a duplicate URL detection
+   */
+  resolveDuplicate(
+    options: Required<SitemapPluginOptions>, 
+    clashingPaths: ResolvedPageApprouved[], 
+  ): ResolvedPageApprouved[] {
+    //
+    const getResolutionMessage = (() => {
+      switch(options.clashingPathsResolution) {
+        case 'ignore':
+          return `Still adding to sitemap.`;
+        case 'remove':
+        return `Removed from sitemap.`;
+        case 'error':
+          return "Cancelling.";
+      }
+    })
+
+    const getMessage = () => `⚠️  Sitemap : Routes definition clash found -> [${clashingPaths.map(e => e.shortPath).join(', ')}]: ${getResolutionMessage()}`;
+
+    //
+    let message = "";
+    if (options.debug.printRoutes) {
+      message = getMessage();
+      console.warn(message);
+    }
+
+    //
+    switch(options.clashingPathsResolution) {
+      case 'ignore':
+        return [clashingPaths[0]];
+      case 'remove':
+        return [];
+      case 'error':
+        throw message ?? getMessage();
+    }
   },
   
+
   /**
    * Reports a duplicate custom URL detection
    */
   reportCustomDuplicate(loc: string, existingPath: string): void {
-    console.warn(`⚠️ Sitemap: Duplicate custom URL "${loc}" - route already defined (custom entry == ${existingPath})`);
+    console.warn(`⚠️  Sitemap : Duplicate custom URL "${loc}" - route already defined (custom entry == ${existingPath})`);
   }
 };
 
@@ -72,22 +77,6 @@ const DuplicateHandler = {
  * Helper functions to create sitemap entries
  */
 const EntryBuilder = {
-  /**
-   * Creates a sitemap entry with standard fields
-   */
-  createEntry(
-    loc: string, 
-    lastmod: string | undefined, 
-    defaultChangefreq?: SitemapEntry['changefreq'], 
-    defaultPriority?: number
-  ): SitemapEntry {
-    const entry: SitemapEntry = { loc };
-    if (defaultChangefreq) entry.changefreq = defaultChangefreq;
-    if (defaultPriority !== undefined) entry.priority = defaultPriority;
-    if (lastmod) entry.lastmod = lastmod;
-    return entry;
-  },
-  
   /**
    * Gets the last modified date for a file
    */
@@ -102,121 +91,55 @@ const EntryBuilder = {
   }
 };
 
-/**
- * Recursive function to collect sitemap entries
- */
-async function getSitemapEntries(
-  options: Required<SitemapPluginOptions>,
-  dir: string,
-  currentRouteSegments: string[] = [],
-  ignorePath: boolean = false,
-  isDomainDrivenPages: boolean = false,
-  existingLocations: Map<string, string> = new Map() // Map to track already added URLs and their origin
-): Promise<SitemapEntry[]> {
-  const {
-    baseUrl,
-    defaultChangefreq,
-    defaultPriority,
-    formatDate,
-    debug,
-  } = options;
+/** */
+async function getResolvedPages(rootDir: string): Promise<ResolvedPage[]> {
+  //
+  const isIndexable = (dir: Dirent) => dir.name.startsWith("+Page.");
 
-  let entries: SitemapEntry[] = [];
-  const items = await fs.readdir(dir, { withFileTypes: true });
-  
-  // Check if this is a "pages" directory in a domain-driven structure
-  const isDomainPagesDir = dir.split('/').pop() === 'pages';
-  
-  // Mark subdirectories as part of a domain-driven structure if we're in a "pages" directory
-  const newIsDomainDrivenPages = isDomainDrivenPages || isDomainPagesDir;
-  
-  for (const item of items) {
-    if (item.isDirectory()) {
-      // Skip directories starting with '_'
-      if (PathUtils.shouldSkipDirectory(item.name)) continue;
+  //
+  const items = await fs.readdir(rootDir, { withFileTypes: true, recursive: true })
 
-      // Mark directories starting with '@' as paths to ignore
-      const isIgnoredDir = PathUtils.shouldIgnoreRoute(item.name);
-      const newIgnorePath = ignorePath || isIgnoredDir;
+  //
+  return items.filter(isIndexable).map(e => {
+    //
+    const shortPath = e.parentPath.substring(rootDir.length);
+    const spSegments = shortPath.split("/").filter(Boolean);
 
-      let newRouteSegments = currentRouteSegments;
-      
-      // Handle special cases for route segments
-      if (item.name === 'index') {
-        // Don't add 'index' to the path
-        newRouteSegments = [...currentRouteSegments];
-      } 
-      // Skip 'pages' segment in domain-driven structure
-      else if (item.name === 'pages' && !isDomainDrivenPages) {
-        newRouteSegments = [...currentRouteSegments];
-      }
-      // Skip ignored directories like @something from path
-      else if (isIgnoredDir) {
-        if (debug.printIgnored) {
-          console.log(`💤 Sitemap: Ignored segment ${item.name} in path: ${join(dir, item.name)}`);
-        }
-        newRouteSegments = [...currentRouteSegments];
-      }
-      // Skip parentheses directories from path
-      else if (/^\(.*\)$/.test(item.name)) {
-        // Don't add this segment to the URL
-        newRouteSegments = [...currentRouteSegments];
-      }
-      // For all other directories, add them to the path
-      else {
-        newRouteSegments = [...currentRouteSegments, item.name];
+    //
+    type Resolution = ResolvedPage["resolution"];
+    const resolve = (): Resolution => {
+      //
+      const segmentsOut = [];
+
+      //
+      for (const segment of spSegments) {
+        //
+        if (segment == "index") continue;
+        if (segment == "pages") continue;
+        if (segment.startsWith("(") && segment.endsWith(")")) continue;
+
+        //
+        if (segment.startsWith("_")) return { rejectReason: "specialFolder" };
+        if (segment.startsWith("@")) return { rejectReason: "SSGUnhandled" };
+
+        //
+        segmentsOut.push(segment);
       }
 
-      entries = entries.concat(await getSitemapEntries(
-        options, 
-        join(dir, item.name), 
-        newRouteSegments, 
-        newIgnorePath,
-        newIsDomainDrivenPages,
-        existingLocations
-      ));
-    } else if (item.isFile()) {
-      if (item.name.match(/^\+Page\.[^.]+$/)) {
-        if (ignorePath) {
-          console.warn(`⚠️ Sitemap: Cannot generate SSG path yet for: ${join(dir, item.name)}`);
-          continue;
-        }
+      //
+      const out = segmentsOut.join("/") + "/";
 
-        let routePath = currentRouteSegments.join('/');
-        if (routePath === 'index') {
-          routePath = '';
-        }
-        
-        // Fix paths for domain-driven structures by removing "pages" from the path
-        if (isDomainDrivenPages) {
-          routePath = PathUtils.fixDomainDrivenPath(routePath);
-        }
-        
-        const loc = PathUtils.normalizeUrl(baseUrl, routePath);
-        const filePath = join(dir, item.name);
-        
-        // Extract relative path for error message
-        const currentPath = PathUtils.extractRelativePath(dir);
-        
-        // Check if this URL already exists in the sitemap
-        if (existingLocations.has(loc)) {
-          const existingPath = existingLocations.get(loc);
-          // Extract relative paths for better readability of the message
-          const prevRelPath = PathUtils.extractRelativePath(existingPath || '');
-          DuplicateHandler.reportDuplicate(loc, currentPath, prevRelPath);
-          continue;
-        }
-        
-        // Add the URL to the set of existing URLs with its source file path
-        existingLocations.set(loc, filePath);
-
-        const lastmod = await EntryBuilder.getLastModifiedDate(filePath, formatDate);
-        const entry = EntryBuilder.createEntry(loc, lastmod, defaultChangefreq, defaultPriority);
-        entries.push(entry);
-      }
+      //
+      return segmentsOut.length ? "/" + out : out;
     }
-  }
-  return entries;
+
+    //
+    return {
+      shortPath,
+      spSegments,
+      resolution: resolve()
+    } satisfies ResolvedPage;
+  });
 }
 
 /**
@@ -225,45 +148,100 @@ async function getSitemapEntries(
  * 2. Routes with parameters (like @id)
  * 3. Other routes in ascending alphabetical order
  */
-function sortSitemapEntries(entries: SitemapEntry[]): SitemapEntry[] {
-  return entries.sort((a, b) => {
-    const pathA = a.loc.split('/').filter(Boolean);
-    const pathB = b.loc.split('/').filter(Boolean);
-    
-    // Compare each path segment
-    const minLength = Math.min(pathA.length, pathB.length);
-    
-    for (let i = 0; i < minLength; i++) {
-      const segmentA = pathA[i];
-      const segmentB = pathB[i];
-      
-      // If it's the last segment of path A and it's empty (index page), A has priority
-      if (i === pathA.length - 1 && segmentA === '') {
-        return -1;
-      }
-      // If it's the last segment of path B and it's empty (index page), B has priority
-      if (i === pathB.length - 1 && segmentB === '') {
-        return 1;
-      }
-      
-      // If A is a parameter (starts with @) and B is not, A has priority after indexes
-      if (segmentA.startsWith('@') && !segmentB.startsWith('@')) {
-        return -1;
-      }
-      // If B is a parameter (starts with @) and A is not, B has priority after indexes
-      if (segmentB.startsWith('@') && !segmentA.startsWith('@')) {
-        return 1;
-      }
-      
-      // If both are parameters or neither is a parameter, compare alphabetically
-      if (segmentA !== segmentB) {
-        return segmentA.localeCompare(segmentB);
-      }
+const resolvedPagesSorter: Parameters<ResolvedPage[]["sort"]>[0] = (a, b) => {
+  const pathA = a.spSegments;
+  const pathB = b.spSegments;
+
+  // Compare each path segment
+  const minLength = Math.min(pathA.length, pathB.length);
+
+  for (let i = 0; i < minLength; i++) {
+    const segmentA = pathA[i];
+    const segmentB = pathB[i];
+
+    // If it's the last segment of path A and it's an index page, A has priority
+    if (i === pathA.length - 1 && segmentA === 'index') {
+      return -1;
     }
-    
-    // If all compared segments are equal, the shorter path has priority
-    return pathA.length - pathB.length;
+    // If it's the last segment of path B and it's an index page, B has priority
+    if (i === pathB.length - 1 && segmentB === 'index') {
+      return 1;
+    }
+
+    // If A is a parameter (starts with @) and B is not, A has priority after indexes
+    if (segmentA.startsWith('@') && !segmentB.startsWith('@')) {
+      return -1;
+    }
+    // If B is a parameter (starts with @) and A is not, B has priority after indexes
+    if (segmentB.startsWith('@') && !segmentA.startsWith('@')) {
+      return 1;
+    }
+
+    // If both are parameters or neither is a parameter, compare alphabetically
+    if (segmentA !== segmentB) {
+      return segmentA.localeCompare(segmentB);
+    }
+  }
+
+  // If all compared segments are equal, the shorter path has priority
+  return pathA.length - pathB.length;
+};
+
+/** */
+async function getSitemapEntries(
+  options: Required<SitemapPluginOptions>,
+  dir: string,
+): Promise<SitemapEntry[]> {
+  //
+  const resolvedWithoutRejection = (await getResolvedPages(dir))
+    .sort(resolvedPagesSorter)
+    .filter(({ shortPath, resolution }) => {
+      //
+      if (typeof resolution === "string") return true;
+
+      //
+      if (options.debug.printIgnored) {
+        switch (resolution.rejectReason) {
+          case "SSGUnhandled": {
+            console.warn(`⚠️  Sitemap : Cannot generate SSG path yet for: ${shortPath}`);
+          }
+          default: { }
+        }
+      }
+
+      //
+      return false;
+    }) as ResolvedPageApprouved[];
+
+  //
+  const withoutDuplicates = DuplicateHandler
+    .groupBy(resolvedWithoutRejection, (e) => e.resolution)
+    .flatMap((e) => {
+      //
+      if (e.length > 1) {
+        return DuplicateHandler.resolveDuplicate(options, e);
+      }
+
+      //
+      return e;
+    });
+
+  //
+  const entries = withoutDuplicates.map(async ({ shortPath, resolution }) => {
+    //
+    const lastmod = await EntryBuilder.getLastModifiedDate(dir + shortPath, options.formatDate);
+
+    //
+    return {
+      lastmod,
+      loc: options.baseUrl + resolution,
+      changefreq: options.defaultChangefreq,
+      priority: options.defaultPriority,
+    };
   });
+
+  //
+  return Promise.all(entries);
 }
 
 /**
@@ -278,8 +256,8 @@ export async function generateSitemapContent(options: Required<SitemapPluginOpti
 
   const resolvedPagesDir = resolve(process.cwd(), pagesDir);
   const existingLocations = new Map<string, string>();
-  const entries = await getSitemapEntries(options, resolvedPagesDir, [], false, false, existingLocations);
-  
+  const entries = await getSitemapEntries(options, resolvedPagesDir);
+
   // Check for duplicate custom URLs
   for (const entry of customEntries) {
     if (existingLocations.has(entry.loc)) {
@@ -290,15 +268,12 @@ export async function generateSitemapContent(options: Required<SitemapPluginOpti
     }
   }
 
-  // Sort sitemap entries according to the requested priority
-  const sortedEntries = sortSitemapEntries(entries);
-
   if (debug.printRoutes) {
-    sortedEntries.forEach((e) => console.log(`✅ Sitemap: route "${e.loc}"`));
+    entries.forEach((e) => console.log(`✅ Sitemap : route "${e.loc}"`));
   }
 
   // Generate XML entries
-  const xmlEntries = sortedEntries.map((entry) => {
+  const xmlEntries = entries.map((entry) => {
     let xml = '  <url>\n';
     xml += `    <loc>${entry.loc}</loc>\n`;
     if (entry.lastmod) xml += `    <lastmod>${entry.lastmod}</lastmod>\n`;
