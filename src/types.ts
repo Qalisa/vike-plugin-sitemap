@@ -132,7 +132,7 @@ export type SitemapPluginOptions = {
    * @type {ClashingPathsResolutionType}
    * @default 'ignore'
    */
-  clashingPathsResolution: ClashingPathsResolutionType,
+  clashingPathsResolution?: ClashingPathsResolutionType,
 
   /**
    * A function to format the last modified date for sitemap entries.
