@@ -77,17 +77,21 @@ export default function VikeSitemapPlugin(options: SitemapPluginOptions): Plugin
       }
     },
     async closeBundle() {
-      // Only write to disk in production builds
-      if (this.environment.config.consumer === 'client') {
-        //
-        if(process.env.NODE_ENV == "production" && defaultBaseUrl == mergedOptions.baseUrl) {
-          console.warn(`⚠️  Sitemap - "baseUrl" must be defined in production; will default to ${defaultBaseUrl}.`);
-        }
-
-        //
-        await writeSitemapToDisk(mergedOptions, this.environment.config.build.outDir);
-        await writeRobotsTxtToDisk(mergedOptions, this.environment.config.build.outDir);
+      // Only write into bundle for the "client"
+      if (this.environment.config.consumer !== 'client') {
+        return;
       }
+
+      //
+      if(process.env.NODE_ENV == "production" && options.baseUrl == undefined) {
+        const message = `⚠️  Sitemap - "baseUrl" must be defined in production.`;
+        console.error(message);
+        throw new Error(message);
+      }
+
+      //
+      await writeSitemapToDisk(mergedOptions, this.environment.config.build.outDir);
+      await writeRobotsTxtToDisk(mergedOptions, this.environment.config.build.outDir);
     },
   };
 }
