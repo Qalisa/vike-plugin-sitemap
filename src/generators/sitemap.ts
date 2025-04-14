@@ -1,4 +1,4 @@
-import { Dirent, promises as fs } from 'fs';
+import { type Dirent, promises as fs } from 'fs';
 import { resolve, join } from 'path';
 import { SitemapPluginOptions, SitemapEntry, ResolvedPage, ResolvedPageApprouved, ClashingPathsResolutionType } from "../types.js";
 
@@ -29,16 +29,16 @@ const DuplicateHandler = {
    * Resolve a duplicate URL detection
    */
   resolveDuplicate(
-    options: Required<SitemapPluginOptions>, 
-    clashingPaths: ResolvedPageApprouved[], 
+    options: Required<SitemapPluginOptions>,
+    clashingPaths: ResolvedPageApprouved[],
   ): ResolvedPageApprouved[] {
     //
     const getResolutionMessage = (() => {
-      switch(options.clashingPathsResolution) {
+      switch (options.clashingPathsResolution) {
         case 'ignore':
           return `Still adding to sitemap.`;
         case 'remove':
-        return `Removed from sitemap.`;
+          return `Removed from sitemap.`;
         case 'error':
           return "Cancelling.";
       }
@@ -54,7 +54,7 @@ const DuplicateHandler = {
     }
 
     //
-    switch(options.clashingPathsResolution) {
+    switch (options.clashingPathsResolution) {
       case 'ignore':
         return [clashingPaths[0]];
       case 'remove':
@@ -63,7 +63,7 @@ const DuplicateHandler = {
         throw message ?? getMessage();
     }
   },
-  
+
 
   /**
    * Reports a duplicate custom URL detection
@@ -91,6 +91,50 @@ const EntryBuilder = {
   }
 };
 
+function _resolver (rootDir: string) {
+  return (dir: Dirent) => {
+    //
+    const path = dir.parentPath;
+    const shortPath = path.substring(rootDir.length);
+    const spSegments = shortPath.split("/").filter(Boolean);
+  
+    //
+    type Resolution = ResolvedPage["resolution"];
+    const resolve = (): Resolution => {
+      //
+      const segmentsOut = [];
+  
+      //
+      for (const segment of spSegments) {
+        //
+        if (segment == "index") continue;
+        if (segment == "pages") continue;
+        if (segment.startsWith("(") && segment.endsWith(")")) continue;
+  
+        //
+        if (segment.startsWith("_")) return { rejectReason: "specialFolder" };
+        if (segment.startsWith("@")) return { rejectReason: "SSGUnhandled" };
+  
+        //
+        segmentsOut.push(segment);
+      }
+  
+      //
+      const out = segmentsOut.join("/") + "/";
+  
+      //
+      return segmentsOut.length ? "/" + out : out;
+    }
+  
+    //
+    return {
+      shortPath,
+      spSegments,
+      resolution: resolve()
+    } satisfies ResolvedPage;
+  }
+}
+
 /** */
 async function getResolvedPages(rootDir: string): Promise<ResolvedPage[]> {
   //
@@ -100,46 +144,9 @@ async function getResolvedPages(rootDir: string): Promise<ResolvedPage[]> {
   const items = await fs.readdir(rootDir, { withFileTypes: true, recursive: true })
 
   //
-  return items.filter(isIndexable).map(e => {
-    //
-    const shortPath = e.parentPath.substring(rootDir.length);
-    const spSegments = shortPath.split("/").filter(Boolean);
-
-    //
-    type Resolution = ResolvedPage["resolution"];
-    const resolve = (): Resolution => {
-      //
-      const segmentsOut = [];
-
-      //
-      for (const segment of spSegments) {
-        //
-        if (segment == "index") continue;
-        if (segment == "pages") continue;
-        if (segment.startsWith("(") && segment.endsWith(")")) continue;
-
-        //
-        if (segment.startsWith("_")) return { rejectReason: "specialFolder" };
-        if (segment.startsWith("@")) return { rejectReason: "SSGUnhandled" };
-
-        //
-        segmentsOut.push(segment);
-      }
-
-      //
-      const out = segmentsOut.join("/") + "/";
-
-      //
-      return segmentsOut.length ? "/" + out : out;
-    }
-
-    //
-    return {
-      shortPath,
-      spSegments,
-      resolution: resolve()
-    } satisfies ResolvedPage;
-  });
+  return items
+    .filter(isIndexable)
+    .map(_resolver(rootDir));
 }
 
 /**
