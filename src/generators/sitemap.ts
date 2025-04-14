@@ -93,8 +93,8 @@ const EntryBuilder = {
 
 function _resolver (rootDir: string) {
   return (dir: Dirent) => {
-    //
-    const path = dir.parentPath;
+    // eslint-disable-next-line deprecation/deprecation (relative to #7)
+    const path = dir.parentPath ?? dir.path;
     const shortPath = path.substring(rootDir.length);
     const spSegments = shortPath.split("/").filter(Boolean);
   
