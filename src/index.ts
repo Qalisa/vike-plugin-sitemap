@@ -1,5 +1,5 @@
-import type { PluginOption, ViteDevServer } from 'vite';
-import type { RobotsOptions, SitemapPluginOptions } from './types.js';
+import { PluginOption, ViteDevServer } from 'vite';
+import { RobotsOptions, SitemapPluginOptions } from './types.js';
 import { generateSitemapContent, writeSitemapToDisk } from './generators/sitemap.js';
 import { generateRobotsTxtContent, robotsFileName, writeRobotsTxtToDisk } from './generators/robots.js';
 

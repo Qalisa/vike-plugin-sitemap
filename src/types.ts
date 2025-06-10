@@ -146,7 +146,8 @@ export type SitemapPluginOptions = {
 
   /**
    * Configuration for the `robots.txt` file.
-   * @type {RobotsOptions | undefined}
+   * If set to `false`, no file is generated.
+   * @type {RobotsOptions | undefined | false}
    * @default "{ userAgent: '*', disallow: { cloudflare: true } }"
    */
   robots?: RobotsOptions | false;
