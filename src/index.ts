@@ -1,5 +1,5 @@
-import { PluginOption, ViteDevServer } from 'vite';
-import { SitemapPluginOptions } from './types.js';
+import type { PluginOption, ViteDevServer } from 'vite';
+import type { RobotsOptions, SitemapPluginOptions } from './types.js';
 import { generateSitemapContent, writeSitemapToDisk } from './generators/sitemap.js';
 import { generateRobotsTxtContent, robotsFileName, writeRobotsTxtToDisk } from './generators/robots.js';
 
@@ -28,14 +28,20 @@ const getDefaultOptions = () : Required<SitemapPluginOptions> => ({
   },
 });
 
+type InternalOptions = ReturnType<typeof getDefaultOptions> & {
+  robots: RobotsOptions | false;
+}
+
 // Vite Plugin
 export default function VikeSitemapPlugin(options: SitemapPluginOptions): PluginOption {
-  //
   const defaultOptions = getDefaultOptions();
-  const mergedOptions: Required<SitemapPluginOptions> = {
+  const mergedOptions: InternalOptions = {
     ...defaultOptions,
     ...options,
-    robots: { ...defaultOptions.robots, ...options.robots },
+    robots:
+      options.robots === false
+        ? false
+        : { ...defaultOptions.robots, ...options.robots },
     debug: { ...defaultOptions.debug, ...options.debug },
   };
 
@@ -46,7 +52,7 @@ export default function VikeSitemapPlugin(options: SitemapPluginOptions): Plugin
   // Function to update in-memory content
   const updateContent = async () => {
     sitemapContent = await generateSitemapContent(mergedOptions);
-    robotsContent = generateRobotsTxtContent(mergedOptions);
+    robotsContent = mergedOptions.robots === false ? '' : generateRobotsTxtContent(mergedOptions);
   };
 
   return {
@@ -62,7 +68,7 @@ export default function VikeSitemapPlugin(options: SitemapPluginOptions): Plugin
           res.end(sitemapContent);
           return;
         }
-        if (req.url === `/${robotsFileName}`) {
+        if (mergedOptions.robots !== false && req.url === `/${robotsFileName}`) {
           res.setHeader('Content-Type', 'text/plain');
           res.end(robotsContent);
           return;
@@ -83,7 +89,7 @@ export default function VikeSitemapPlugin(options: SitemapPluginOptions): Plugin
       }
 
       //
-      if(process.env.NODE_ENV == "production" && options.baseUrl == undefined) {
+      if(process.env.NODE_ENV === "production" && options.baseUrl === undefined) {
         const message = `⚠️  Sitemap - "baseUrl" must be defined in production.`;
         console.error(message);
         throw new Error(message);
@@ -91,7 +97,12 @@ export default function VikeSitemapPlugin(options: SitemapPluginOptions): Plugin
 
       //
       await writeSitemapToDisk(mergedOptions, this.environment.config.build.outDir);
-      await writeRobotsTxtToDisk(mergedOptions, this.environment.config.build.outDir);
+      if (mergedOptions.robots !== false) {
+        await writeRobotsTxtToDisk(
+          mergedOptions,
+          this.environment.config.build.outDir
+        );
+      }
     },
   };
 }

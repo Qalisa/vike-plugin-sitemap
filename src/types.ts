@@ -149,7 +149,7 @@ export type SitemapPluginOptions = {
    * @type {RobotsOptions | undefined}
    * @default "{ userAgent: '*', disallow: { cloudflare: true } }"
    */
-  robots?: RobotsOptions;
+  robots?: RobotsOptions | false;
 
   /**
    * Debugging options to log plugin behavior.
