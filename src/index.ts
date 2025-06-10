@@ -1,12 +1,12 @@
 import { PluginOption, ViteDevServer } from 'vite';
-import { RobotsOptions, SitemapPluginOptions } from './types.js';
+import { SitemapPluginOptions } from './types.js';
 import { generateSitemapContent, writeSitemapToDisk } from './generators/sitemap.js';
 import { generateRobotsTxtContent, robotsFileName, writeRobotsTxtToDisk } from './generators/robots.js';
 
 const defaultBaseUrl = 'http://localhost:3000';
 
 //
-const getDefaultOptions = () : Required<SitemapPluginOptions> => ({
+const defaultOptions: Required<SitemapPluginOptions> = {
   pagesDir: 'pages',
   baseUrl: defaultBaseUrl,
   filename: 'sitemap.xml',
@@ -26,16 +26,11 @@ const getDefaultOptions = () : Required<SitemapPluginOptions> => ({
     printRoutes: false,
     printIgnored: false,
   },
-});
-
-type InternalOptions = ReturnType<typeof getDefaultOptions> & {
-  robots: RobotsOptions | false;
-}
+};
 
 // Vite Plugin
 export default function VikeSitemapPlugin(options: SitemapPluginOptions): PluginOption {
-  const defaultOptions = getDefaultOptions();
-  const mergedOptions: InternalOptions = {
+  const mergedOptions: typeof defaultOptions = {
     ...defaultOptions,
     ...options,
     robots:
