@@ -5,8 +5,12 @@ import { SitemapPluginOptions } from "../types.js";
 // Generate robots.txt content (returns string instead of writing to disk)
 export function generateRobotsTxtContent(options: Required<SitemapPluginOptions>): string {
   const { baseUrl, filename, robots } = options;
+  if (robots === false) {
+    return '';
+  }
+
   const sitemapUrl = `${baseUrl}/${filename}`.replace(/\/+/g, '/');
-  
+
   //
   const file = `User-agent: ${robots.userAgent}
 ${robots.disallow.cloudflare ? 'Disallow: /cdn-cgi/' : ''}
