@@ -3,12 +3,10 @@ import { SitemapPluginOptions } from './types.js';
 import { generateSitemapContent, writeSitemapToDisk } from './generators/sitemap.js';
 import { generateRobotsTxtContent, robotsFileName, writeRobotsTxtToDisk } from './generators/robots.js';
 
-const defaultBaseUrl = 'http://localhost:3000';
-
 //
 const defaultOptions: Required<SitemapPluginOptions> = {
   pagesDir: 'pages',
-  baseUrl: defaultBaseUrl,
+  baseUrl: 'http://localhost:3000',
   filename: 'sitemap.xml',
   outputDir: '.',
   defaultChangefreq: 'weekly',
