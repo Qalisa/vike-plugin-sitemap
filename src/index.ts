@@ -45,7 +45,7 @@ export default function VikeSitemapPlugin(options: SitemapPluginOptions): Plugin
   // Function to update in-memory content
   const updateContent = async () => {
     sitemapContent = await generateSitemapContent(mergedOptions);
-    robotsContent = mergedOptions.robots === false ? '' : generateRobotsTxtContent(mergedOptions);
+    robotsContent = generateRobotsTxtContent(mergedOptions);
   };
 
   return {
