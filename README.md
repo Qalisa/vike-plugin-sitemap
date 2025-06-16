@@ -53,7 +53,7 @@ export default {
 | `defaultChangefreq`| `string`  | `'weekly'`        | Default change frequency for pages. |
 | `defaultPriority`  | `number`  | `0.5`             | Default priority for pages. |
 | `customEntries`    | `SitemapEntry[]` | `[]` | Additional custom sitemap entries. |
-| `robots`           | `RobotsOptions` | `{ userAgent: '*', disallow: { cloudflare: true } }` | Robots.txt options. |
+| `robots`           | `RobotsOptions` or `false` | `{ userAgent: '*', disallow: { cloudflare: true } }` | Robots.txt options. If you pass `false`, no robots.txt is generated |
 
 ## License
 
