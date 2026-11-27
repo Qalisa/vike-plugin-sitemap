@@ -28,4 +28,4 @@ jobs:
         run: pnpm i
       - name: Publish
         if: steps.release.outputs.released == 'true'
-        run: npm publish --access public
+        run: npm stage publish --access public
